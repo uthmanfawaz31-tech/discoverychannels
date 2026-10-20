@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Telegram Member & Commenter Explorer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(22, 27, 46, 0.7);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --accent: #06b6d4;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --input-bg: rgba(15, 23, 42, 0.8);
+      --table-row-hover: rgba(255, 255, 255, 0.03);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.12) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(6, 182, 212, 0.1) 0px, transparent 50%),
+        radial-gradient(at 50% 100%, rgba(99, 102, 241, 0.08) 0px, transparent 50%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      border-bottom: 1px solid var(--card-border);
+      padding: 1.25rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      backdrop-filter: blur(12px);
+      background: rgba(9, 13, 22, 0.6);
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #2563eb, #06b6d4);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+    }
+
+    .brand-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      padding: 0.4rem 0.8rem;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--danger);
+    }
+
+    .status-dot.active {
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+    }
+
+    .btn {
+      padding: 0.6rem 1.2rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid var(--card-border);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    main {
+      flex: 1;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .hero-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 2.5rem;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .hero-title {
+      font-size: 1.75rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    .hero-subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 1.75rem;
+    }
+
+    .search-bar {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .input-group {
+      flex: 1;
+      position: relative;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 0.9rem 1.25rem;
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 1rem;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .input-field:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    .alert {
+      padding: 1rem 1.25rem;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      margin-top: 1rem;
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .alert-error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+    }
+
+    .alert-info {
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: #93c5fd;
+    }
+
+    .results-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      backdrop-filter: blur(16px);
+      overflow: hidden;
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .results-header {
+      padding: 1.5rem 2rem;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .results-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .target-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .pill-badge {
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .pill-method {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      max-height: 550px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    th {
+      padding: 1rem 1.5rem;
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--text-muted);
+      font-weight: 600;
+      border-bottom: 1px solid var(--card-border);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    td {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      color: var(--text);
+    }
+
+    tr:hover td {
+      background-color: var(--table-row-hover);
+    }
+
+    .user-cell {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .avatar-circle {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: #fff;
+    }
+
+    .tag-source {
+      background: rgba(99, 102, 241, 0.15);
+      color: #a5b4fc;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      padding: 1rem;
+    }
+
+    .modal-content {
+      background: #111827;
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 2rem;
+      max-width: 520px;
+      width: 100%;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      animation: modalScale 0.25s ease;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+    }
+
+    .modal-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+      font-weight: 500;
+    }
+
+    .card-box {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes modalScale {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="brand-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-title">MemberScope</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="status-badge" id="statusBadge">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText">Checking...</span>
+      </div>
+      <button class="btn btn-secondary" onclick="openSettings()">
+        ⚙️ Settings & Login
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <div class="hero-card">
+      <h1 class="hero-title">Detect Telegram Channel & Group Members</h1>
+      <p class="hero-subtitle">
+        Paste any Telegram link. For broadcast channels, the system automatically checks linked discussion groups and extracts active post commenters.
+      </p>
+
+      <div class="search-bar">
+        <div class="input-group">
+          <input 
+            type="text" 
+            id="channelInput" 
+            class="input-field" 
+            placeholder="Paste Telegram channel link (e.g. https://t.me/channel_name or @channel_name)"
+          >
+        </div>
+        <button class="btn btn-primary" id="scanBtn" onclick="startExtraction()">
+          <span id="btnSpinner" class="spinner" style="display: none;"></span>
+          <span id="btnText">Detect Members</span>
+        </button>
+      </div>
+
+      <div class="alert alert-info" id="alertInfo"></div>
+      <div class="alert alert-error" id="alertError"></div>
+    </div>
+
+    <div class="results-card" id="resultsCard">
+      <div class="results-header">
+        <div class="results-meta">
+          <h2 class="target-title" id="resultsTargetTitle">Channel Name</h2>
+          <span class="pill-badge" id="resultsChatType">Channel</span>
+          <span class="pill-method" id="resultsMethod">Detection Method</span>
+          <span class="pill-badge" id="resultsCount">0 Members</span>
+        </div>
+        <div style="display: flex; gap: 0.75rem;">
+          <input 
+            type="text" 
+            id="filterInput" 
+            class="input-field" 
+            style="padding: 0.5rem 1rem; font-size: 0.85rem; width: 200px;" 
+            placeholder="Search in results..."
+            oninput="filterTable()"
+          >
+          <button class="btn btn-secondary" onclick="exportCSV()">
+            📥 Export CSV
+          </button>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 50px;">#</th>
+              <th>Member Name</th>
+              <th>Username</th>
+              <th>Telegram ID</th>
+              <th>Source / Activity</th>
+              <th>Phone</th>
+            </tr>
+          </thead>
+          <tbody id="membersTableBody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- Settings & Login Modal -->
+  <div class="modal-backdrop" id="settingsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Settings & Telegram Login</h3>
+        <button class="btn btn-secondary" style="padding: 0.3rem 0.6rem;" onclick="closeSettings()">✕</button>
+      </div>
+
+      <div class="card-box">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+          <div style="font-weight: 600; font-size: 0.95rem;">Telegram User Authentication</div>
+          <span id="userAuthBadge" class="pill-badge" style="background: rgba(239, 68, 68, 0.15); color: #fca5a5;">Not Logged In</span>
+        </div>
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem;">
+          Logging in with your Telegram phone number removes bot restrictions and lets the tool scan public channels and post comments directly.
+        </p>
+        
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+          <input type="text" id="phoneInput" class="input-field" placeholder="Phone e.g. +2349034902565" style="padding: 0.6rem 0.8rem; font-size: 0.85rem;">
+          <button class="btn btn-primary" style="white-space: nowrap; padding: 0.6rem 1rem;" onclick="sendAuthCode()">Send Code</button>
+        </div>
+
+        <div id="verifyCodeGroup" style="display: none; margin-top: 0.75rem; border-top: 1px solid var(--card-border); padding-top: 0.75rem;">
+          <label class="form-label">Enter 5-digit Telegram code sent to your app:</label>
+          <div style="display: flex; gap: 0.5rem;">
+            <input type="text" id="telegramCodeInput" class="input-field" placeholder="12345" style="padding: 0.6rem 0.8rem; font-size: 0.85rem;">
+            <button class="btn btn-primary" style="white-space: nowrap;" onclick="verifyAuthCode()">Verify</button>
+          </div>
+          <div id="password2FAGroup" style="display: none; margin-top: 0.5rem;">
+            <label class="form-label">2FA Password (if enabled):</label>
+            <input type="password" id="password2FAInput" class="input-field" placeholder="Your 2FA Password" style="padding: 0.6rem 0.8rem; font-size: 0.85rem;">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">API ID (from my.telegram.org)</label>
+        <input type="text" id="apiIdInput" class="input-field" placeholder="e.g. 28106900">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">API Hash</label>
+        <input type="text" id="apiHashInput" class="input-field" placeholder="e.g. a680867a584...">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Bot Token (from @BotFather)</label>
+        <input type="text" id="botTokenInput" class="input-field" placeholder="e.g. 8930698921:AAGjt...">
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+        <button class="btn btn-secondary" onclick="closeSettings()">Close</button>
+        <button class="btn btn-primary" onclick="saveSettings()">Save Credentials</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let extractedMembers = [];
+    let currentTitle = "members";
+
+    async function checkStatus() {
+      try {
+        const res = await fetch('/api/settings');
+        const data = await res.json();
+        const dot = document.getElementById('statusDot');
+        const text = document.getElementById('statusText');
+        const userBadge = document.getElementById('userAuthBadge');
+
+        text.innerText = data.active_mode;
+
+        if (data.is_user_authorized) {
+          dot.classList.add('active');
+          userBadge.innerText = 'Connected (User Access)';
+          userBadge.style.background = 'rgba(16, 185, 129, 0.15)';
+          userBadge.style.color = '#34d399';
+        } else if (data.is_bot_authorized) {
+          dot.classList.add('active');
+          userBadge.innerText = 'Bot Only (Limited)';
+          userBadge.style.background = 'rgba(245, 158, 11, 0.15)';
+          userBadge.style.color = '#fbbf24';
+        } else {
+          dot.classList.remove('active');
+          userBadge.innerText = 'Not Logged In';
+        }
+
+        if (data.api_id) document.getElementById('apiIdInput').value = data.api_id;
+        if (data.phone_number) document.getElementById('phoneInput').value = data.phone_number;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function openSettings() {
+      document.getElementById('settingsModal').style.display = 'flex';
+      checkStatus();
+    }
+
+    function closeSettings() {
+      document.getElementById('settingsModal').style.display = 'none';
+    }
+
+    async function sendAuthCode() {
+      const phone = document.getElementById('phoneInput').value.trim();
+      if (!phone) {
+        alert("Please enter your phone number with country code (e.g. +2349034902565)");
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/auth/send_code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          document.getElementById('verifyCodeGroup').style.display = 'block';
+          alert(data.message || "Code sent! Check your Telegram app for the 5-digit login code.");
+        } else {
+          alert(data.detail || "Error sending code");
+        }
+      } catch (err) {
+        alert("Failed to send code: " + err);
+      }
+    }
+
+    async function verifyAuthCode() {
+      const code = document.getElementById('telegramCodeInput').value.trim();
+      const password = document.getElementById('password2FAInput').value.trim();
+
+      if (!code) {
+        alert("Please enter the 5-digit verification code.");
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/auth/verify_code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, password })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          if (data.needs_password) {
+            document.getElementById('password2FAGroup').style.display = 'block';
+            alert("2FA Password is required. Please type your password and click Verify again.");
+            return;
+          }
+          alert("Success! Your Telegram account is now connected.");
+          checkStatus();
+          closeSettings();
+        } else {
+          alert(data.detail || "Verification failed");
+        }
+      } catch (err) {
+        alert("Verification error: " + err);
+      }
+    }
+
+    async function saveSettings() {
+      const api_id = document.getElementById('apiIdInput').value.trim();
+      const api_hash = document.getElementById('apiHashInput').value.trim();
+      const bot_token = document.getElementById('botTokenInput').value.trim();
+      const phone_number = document.getElementById('phoneInput').value.trim();
+
+      try {
+        const res = await fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ api_id, api_hash, bot_token, phone_number })
+        });
+        if (res.ok) {
+          checkStatus();
+          alert("Credentials saved.");
+        } else {
+          alert("Error saving settings");
+        }
+      } catch (err) {
+        alert("Error: " + err);
+      }
+    }
+
+    async function startExtraction() {
+      const input = document.getElementById('channelInput').value.trim();
+      const alertErr = document.getElementById('alertError');
+      const alertInfo = document.getElementById('alertInfo');
+      const scanBtn = document.getElementById('scanBtn');
+      const btnSpinner = document.getElementById('btnSpinner');
+      const btnText = document.getElementById('btnText');
+      const resultsCard = document.getElementById('resultsCard');
+
+      alertErr.style.display = 'none';
+      alertInfo.style.display = 'none';
+
+      if (!input) {
+        showAlertError("Please enter a Telegram channel or group link.");
+        return;
+      }
+
+      scanBtn.disabled = true;
+      btnSpinner.style.display = 'inline-block';
+      btnText.innerText = 'Detecting Members...';
+      showAlertInfo(`Scanning target: ${input}... Checking members, discussion groups, and active commenters.`);
+
+      try {
+        const res = await fetch('/api/extract', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: input, scan_posts: 50 })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.detail || "Failed to extract members.");
+        }
+
+        extractedMembers = data.members;
+        currentTitle = data.title;
+
+        document.getElementById('resultsTargetTitle').innerText = data.title;
+        document.getElementById('resultsChatType').innerText = data.chat_type;
+        document.getElementById('resultsMethod').innerText = data.extraction_method;
+        document.getElementById('resultsCount').innerText = `${data.total_detected} Members`;
+
+        renderTable(extractedMembers);
+        resultsCard.style.display = 'block';
+        alertInfo.style.display = 'none';
+
+      } catch (err) {
+        showAlertError(err.message);
+      } finally {
+        scanBtn.disabled = false;
+        btnSpinner.style.display = 'none';
+        btnText.innerText = 'Detect Members';
+      }
+    }
+
+    function renderTable(list) {
+      const tbody = document.getElementById('membersTableBody');
+      tbody.innerHTML = '';
+
+      if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">No members found.</td></tr>';
+        return;
+      }
+
+      list.forEach((m, idx) => {
+        const tr = document.createElement('tr');
+        const initial = m.full_name ? m.full_name.charAt(0).toUpperCase() : '?';
+
+        tr.innerHTML = `
+          <td style="color: var(--text-muted);">${idx + 1}</td>
+          <td>
+            <div class="user-cell">
+              <div class="avatar-circle">${initial}</div>
+              <div style="font-weight: 600;">${escapeHtml(m.full_name)}</div>
+            </div>
+          </td>
+          <td>${m.username ? `<span style="color: #60a5fa;">${escapeHtml(m.username)}</span>` : '<span style="color: var(--text-muted);">-</span>'}</td>
+          <td><code>${m.id}</code></td>
+          <td><span class="tag-source">${escapeHtml(m.source || 'Member')}</span></td>
+          <td>${m.phone ? escapeHtml(m.phone) : '<span style="color: var(--text-muted);">-</span>'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function filterTable() {
+      const q = document.getElementById('filterInput').value.toLowerCase();
+      const filtered = extractedMembers.filter(m => 
+        (m.full_name && m.full_name.toLowerCase().includes(q)) ||
+        (m.username && m.username.toLowerCase().includes(q)) ||
+        (String(m.id).includes(q))
+      );
+      renderTable(filtered);
+    }
+
+    async function exportCSV() {
+      if (!extractedMembers.length) return;
+      try {
+        const res = await fetch('/api/export_csv', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ members: extractedMembers, title: currentTitle })
+        });
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${currentTitle}_members.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      } catch (err) {
+        alert("Failed to export CSV: " + err);
+      }
+    }
+
+    function showAlertError(msg) {
+      const el = document.getElementById('alertError');
+      el.innerText = msg;
+      el.style.display = 'block';
+    }
+
+    function showAlertInfo(msg) {
+      const el = document.getElementById('alertInfo');
+      el.innerText = msg;
+      el.style.display = 'block';
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    checkStatus();
+  </script>
+</body>
+</html>
